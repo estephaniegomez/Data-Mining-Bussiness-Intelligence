@@ -1,6 +1,6 @@
 # Data-Mining-Bussiness-Intelligence
 This repository is to save homeworks and other files related to Data Mining and Bussiness Intelligence course. 
-The files compressed in zip for easy download, however, folder "Bikestore" has the decompressed files. 
+The files compressed in zip for easy download, however, folder "bikes" has the decompressed files.
 
 
 Video homework 1: https://www.youtube.com/watch?v=R34xqRNyiIQ&t=284s
