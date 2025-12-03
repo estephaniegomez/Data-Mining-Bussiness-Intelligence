@@ -1,0 +1,123 @@
+---
+title: "Proyecto-final"
+author: "Estephanie Gomez"
+date: "2025-02-10"
+output: pdf_document
+---
+```{r }
+install.packages("arules", repos = "https://cloud.r-project.org/")
+
+# Verificar si el paquete 'arules' está instalado
+if (!requireNamespace("arules", quietly = TRUE)) {
+  install.packages("arules")
+}
+
+# Cargar el paquete 'arules'
+library(arules)
+```
+## R Markdown
+
+Objetivo:
+
+Este script en R de algoritmo apriori va a obtener la posibilidad de tener diabetes dato las condiciones de alta presion arterial (HighBP), colesterol alto (HighChol), chequeo de colesterol (CholCheck) y	fumadora (Smoker).
+
+Eventos (A,B,C,D) -> Evento (diabetes)
+
+Métricas:
+
+- Soporte: mide la frecuencia con la que ocurre una combinación de elementos (reglas) en el conjunto de datos.
+- Confianza: mide la probabilidad de que el lado derecho (rhs) de la regla ocurra dado que el lado izquierdo (lhs) de la regla es cierto
+- Lift: fuerza de la asociación entre los elementos del lhs y rhs en la regla.
+- Coverage: responde a cuántas transacciones contienen el antecedente
+
+# Librerias
+```{r }
+library(tidyverse)
+datos <- read_csv(file = "Diabetes_data_modified.csv", col_names = TRUE)
+head(datos)
+```
+# EDA 
+Este bloque saca un EDA de los datos, en realidad todos son binarios expecto el Session ID,
+segun lo visto en clases a priori funciona con datos que vayan siendo transacciones
+
+```{r }
+head(datos)
+str(datos)
+colSums(is.na(datos))
+summary(datos)
+
+```
+
+# Transformacion de datos
+Filtrar por una condición, en este caso diabetes binary es la condicion y seleccionar las columnas de interés, trabajando el data set de diabetesFiltrar por una condición y seleccionar las columnas de interés, trabajando el data set de diabetes.
+
+```{r }
+
+data_trans <- data.frame(
+  HighBP = as.factor(datos$HighBP),       # Cambiar 'data' por 'datos'
+  HighChol = as.factor(datos$HighChol),   # Cambiar 'data' por 'datos'
+  CholCheck = as.factor(datos$CholCheck), # Cambiar 'data' por 'datos'
+  Smoker = as.factor(datos$Smoker),       # Cambiar 'data' por 'datos'
+  Diabetes_binary = as.factor(datos$Diabetes_binary)  # Cambiar 'data' por 'datos'
+)
+
+# Convertir el dataframe a transacciones
+transactions <- as(data_trans, "transactions")
+
+# Ver los primeros datos
+head(datos)
+
+
+```
+
+# Algoritmo Apriori 
+Aplicar el algoritmo Apriori para encontrar reglas de asociación y Definir los parámetros de support y confidence
+
+```{r }
+reglas <- apriori(transactions, 
+                  parameter = list(support = 0.1, confidence = 0.8))
+
+# Ver las reglas generadas
+inspect(reglas)
+
+```
+
+# Responder que reglas hacen que un paciente tenga diabetes
+Filtrar reglas que tengan 'Diabetes_binary = 1' en el lado derecho
+```{r }
+
+# Ver las reglas filtradas
+inspect(reglas[1:10])
+
+# Filtrar reglas donde 'Diabetes_binary=1' esté en el lado izquierdo (lhs)
+reglas_diabetes <- subset(reglas, lhs %in% "Diabetes_binary=1")
+
+# Ver las reglas filtradas
+inspect(reglas_diabetes)
+
+
+```
+
+# Data frame con tablas de asociacion
+Mejora visual, para ver las reglas.
+```{r }
+# Convertir las reglas filtradas a un data.frame
+reglas_df <- as(reglas_diabetes, "data.frame")
+
+# Guardar en csv
+
+write.csv(reglas_df, "reglas_diabetes.csv", row.names = FALSE)
+
+# Ver las primeras filas del data.frame
+head(reglas_df)
+
+```
+# Conclusiones
+
+Vamos a analizar una de las reglas, recordar que R da las reglas con asociacion mas fuerte. 
+
+
+Regla: {Smoker=1, Diabetes_binary=1} => {CholCheck=1}
+Esta regla sugiere que, aunque el fumar es un factor de riesgo, los fumadores con diabetes tienen una probabilidad extremadamente alta (99.21%) de hacerse un chequeo de colesterol.
+
+El soporte es de 25.715 es decir es la regla que cumple con las condiciones de persona fumadora, con diabetes que tiene chequeos de colesterol, la confianza de que esta regla sea cierta cuando se cumple las 3 condiciones es de un 99,21%. El lift de 1.071, lo que quiere decir es que hay una relacion positiva entre los dos eventos. 
